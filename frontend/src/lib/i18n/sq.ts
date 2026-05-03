@@ -731,6 +731,12 @@ export const sq: typeof en = {
   machinery_no_results: 'Asnjë makinë e regjistruar ende.',
   machinery_alert_title: 'makineri me probleme',
   machinery_alert_one: 'makineri me problem',
+  greeting_morning: 'Mirëmëngjes',
+  greeting_afternoon: 'Mirëdita',
+  greeting_evening: 'Mirëmbrëma',
+  dashboard_hero_revenue: 'Të ardhura për periudhën',
+  dashboard_hero_subtitle: 'Ja çfarë po lëviz sot në punëtorinë tënde.',
+  dashboard_view_pipeline: 'Hap rrjedhën',
   'cap.machinery.read': 'Lexo makinerinë',
   'cap.machinery.read.desc': 'Shih listën e makinerive dhe statusin aktual.',
 };

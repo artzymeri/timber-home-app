@@ -12,27 +12,28 @@ import {
   Coins,
   Hourglass,
   RefreshCcw,
+  Sparkles,
   Truck,
   Users,
   ShieldCheck,
+  TrendingUp,
 } from 'lucide-react';
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
 import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageContainer } from '@/components/page-container';
-import { PageHeader } from '@/components/page-header';
 import { MetricCard } from '@/components/metric-card';
+import { AnimatedNumber } from '@/components/animated-number';
+import { useAuth } from '@/lib/auth-context';
 import { EmptyState } from '@/components/empty-state';
 import { StageBadge } from '@/components/stage-badge';
 import { resolveIcon } from '@/lib/icon-resolver';
@@ -94,8 +95,14 @@ interface MachineryAlert {
   machines: { id: number; name: string }[];
 }
 
+const trendChartConfig = {
+  revenue: { label: 'Revenue', color: 'var(--chart-2)' },
+  orders: { label: 'Orders', color: 'var(--chart-1)' },
+} satisfies ChartConfig;
+
 export default function AdminDashboard() {
   const { t } = useI18n();
+  const { user } = useAuth();
   const [orders, setOrders] = useState<OrderRow[] | null>(null);
   const [production, setProduction] = useState<ProductionAnalytics | null>(null);
   const [inventory, setInventory] = useState<InventoryAnalytics | null>(null);
@@ -166,6 +173,34 @@ export default function AdminDashboard() {
       }));
   }, [sales, period]);
 
+  // Hero number + revenue delta vs prior period.
+  const monthlyAsc = useMemo(() => {
+    if (!sales?.monthly) return [] as { revenue: number; orders: number }[];
+    return [...sales.monthly]
+      .reverse() // backend returns DESC; mirror to ASC for trend math
+      .map((r) => ({ revenue: Number(r.revenue) || 0, orders: Number(r.order_count) || 0 }));
+  }, [sales]);
+
+  const heroRevenue = monthlyAsc[monthlyAsc.length - 1]?.revenue ?? 0;
+  const revenueTrend = useMemo(() => {
+    const last = monthlyAsc[monthlyAsc.length - 1]?.revenue ?? 0;
+    const prev = monthlyAsc[monthlyAsc.length - 2]?.revenue ?? 0;
+    if (prev === 0) return undefined;
+    const pct = ((last - prev) / prev) * 100;
+    return {
+      value: `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%`,
+      direction: pct > 0.5 ? ('up' as const) : pct < -0.5 ? ('down' as const) : ('flat' as const),
+    };
+  }, [monthlyAsc]);
+
+  const greetingKey: TranslationKeys = (() => {
+    const h = new Date().getHours();
+    if (h < 12) return 'greeting_morning';
+    if (h < 18) return 'greeting_afternoon';
+    return 'greeting_evening';
+  })();
+  const firstName = user?.name?.split(' ')[0] ?? '';
+
   const attentionItems = useMemo(() => {
     if (!inventory) return [];
     return inventory.lowStock.slice(0, 5).map((item) => ({
@@ -183,26 +218,83 @@ export default function AdminDashboard() {
   return (
     <PageContainer size="wide">
       <div className="space-y-6">
-        <PageHeader
-          title={t('dashboard_overview')}
-          description={t('dashboard_overview_subtitle')}
-          actions={
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setRefreshKey((k) => k + 1)}
-              disabled={loading}
-            >
-              <RefreshCcw size={14} className={loading ? 'animate-spin' : ''} />
-              <span>{t('dashboard_refresh')}</span>
-            </Button>
-          }
-        />
+        {/* Hero greeting card */}
+        <div className="relative overflow-hidden rounded-3xl border bg-card p-6 sm:p-8 animate-in fade-in-0 slide-in-from-top-2 duration-500">
+          {/* decorative blurred orbs */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-20 -right-16 h-64 w-64 rounded-full bg-sky-400/20 blur-3xl dark:bg-sky-500/15"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-violet-400/15 blur-3xl dark:bg-violet-500/10"
+          />
+
+          <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <div className="flex items-center gap-1.5">
+                <Sparkles size={14} className="text-brand" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t(greetingKey)}{firstName && `, ${firstName}`}
+                </span>
+              </div>
+              <h1 className="mt-1.5 text-3xl font-bold tracking-tight sm:text-4xl">
+                {t('dashboard_overview')}
+              </h1>
+              <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+                {t('dashboard_hero_subtitle')}
+              </p>
+            </div>
+
+            <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-end sm:gap-6">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  {t('dashboard_hero_revenue')}
+                </p>
+                <p className="mt-1 text-3xl font-bold tabular-nums sm:text-4xl">
+                  {loading ? (
+                    <Skeleton className="h-9 w-32" />
+                  ) : (
+                    <AnimatedNumber
+                      value={heroRevenue}
+                      format={(n) =>
+                        n >= 1000 ? `€${(n / 1000).toFixed(1)}k` : `€${Math.round(n).toLocaleString()}`
+                      }
+                    />
+                  )}
+                </p>
+                {revenueTrend && !loading && (
+                  <span
+                    className={cn(
+                      'mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium',
+                      revenueTrend.direction === 'up' && 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300',
+                      revenueTrend.direction === 'down' && 'bg-rose-500/15 text-rose-600 dark:text-rose-300',
+                      revenueTrend.direction === 'flat' && 'bg-muted text-muted-foreground'
+                    )}
+                  >
+                    <TrendingUp size={11} className={cn(revenueTrend.direction === 'down' && 'rotate-180')} />
+                    {revenueTrend.value}
+                  </span>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setRefreshKey((k) => k + 1)}
+                disabled={loading}
+                className="self-start sm:self-end"
+              >
+                <RefreshCcw size={14} className={loading ? 'animate-spin' : ''} />
+                <span>{t('dashboard_refresh')}</span>
+              </Button>
+            </div>
+          </div>
+        </div>
 
         {machineryAlert.count > 0 && (
           <Link
             href="/admin/machinery"
-            className="group flex items-start gap-3 rounded-2xl border border-rose-300/40 bg-rose-50 p-4 transition-colors hover:bg-rose-100/60 dark:border-rose-500/30 dark:bg-rose-500/5 dark:hover:bg-rose-500/10"
+            className="group flex items-start gap-3 rounded-2xl border border-rose-300/40 bg-rose-50 p-4 transition-colors hover:bg-rose-100/60 animate-in fade-in-0 slide-in-from-top-1 duration-500 dark:border-rose-500/30 dark:bg-rose-500/5 dark:hover:bg-rose-500/10"
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-500/15">
               <AlertTriangle size={18} className="text-rose-600 dark:text-rose-300" />
@@ -220,7 +312,7 @@ export default function AdminDashboard() {
           </Link>
         )}
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 animate-in fade-in-0 duration-500">
           <MetricCard
             icon={Coins}
             label={t('dashboard_pipeline_value')}
@@ -256,7 +348,7 @@ export default function AdminDashboard() {
           />
         </div>
 
-        {/* Trend chart */}
+        {/* Trend chart — shadcn Area Chart Gradient */}
         <Card>
           <CardHeader className="pb-2">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -275,59 +367,68 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="px-2 pb-2">
             {loading ? (
-              <Skeleton className="h-[240px] w-full" />
+              <Skeleton className="h-[260px] w-full" />
             ) : chartData.length === 0 ? (
-              <div className="h-[240px] flex items-center justify-center">
-                <EmptyState
-                  tone="info"
-                  title={t('dashboard_no_data')}
-                  compact
-                />
+              <div className="h-[260px] flex items-center justify-center">
+                <EmptyState tone="info" title={t('dashboard_no_data')} compact />
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={240}>
-                <AreaChart data={chartData} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+              <ChartContainer config={trendChartConfig} className="h-[260px] w-full">
+                <AreaChart data={chartData} margin={{ left: 12, right: 12 }}>
                   <defs>
-                    <linearGradient id="fillOrders" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--chart-1, 215 90% 60%))" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="hsl(var(--chart-1, 215 90% 60%))" stopOpacity={0.05} />
-                    </linearGradient>
                     <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--chart-2, 145 65% 50%))" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="hsl(var(--chart-2, 145 65% 50%))" stopOpacity={0.05} />
+                      <stop offset="5%" stopColor="var(--color-revenue)" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="var(--color-revenue)" stopOpacity={0.1} />
+                    </linearGradient>
+                    <linearGradient id="fillOrders" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--color-orders)" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="var(--color-orders)" stopOpacity={0.1} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} className="text-xs" />
-                  <YAxis tickLine={false} axisLine={false} tickMargin={8} className="text-xs" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'var(--popover)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 6,
-                      fontSize: 12,
-                    }}
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="month"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    minTickGap={32}
                   />
+                  <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
                   <Area
-                    type="monotone"
                     dataKey="revenue"
-                    name={t('trend_revenue')}
-                    stroke="hsl(var(--chart-2, 145 65% 50%))"
+                    type="natural"
                     fill="url(#fillRevenue)"
+                    fillOpacity={0.4}
+                    stroke="var(--color-revenue)"
                     strokeWidth={2}
                   />
                   <Area
-                    type="monotone"
                     dataKey="orders"
-                    name={t('trend_orders')}
-                    stroke="hsl(var(--chart-1, 215 90% 60%))"
+                    type="natural"
                     fill="url(#fillOrders)"
+                    fillOpacity={0.4}
+                    stroke="var(--color-orders)"
                     strokeWidth={2}
                   />
                 </AreaChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             )}
           </CardContent>
+          {revenueTrend && !loading && (
+            <CardFooter className="flex-col items-start gap-1 pt-3 text-sm">
+              <div className="flex items-center gap-2 font-medium">
+                {t('dashboard_hero_revenue')} {revenueTrend.value}{' '}
+                <TrendingUp
+                  size={14}
+                  className={cn(
+                    revenueTrend.direction === 'up' && 'text-emerald-500',
+                    revenueTrend.direction === 'down' && 'rotate-180 text-rose-500',
+                    revenueTrend.direction === 'flat' && 'text-muted-foreground'
+                  )}
+                />
+              </div>
+            </CardFooter>
+          )}
         </Card>
 
         <div className="grid gap-4 lg:grid-cols-3">

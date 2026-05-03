@@ -731,6 +731,14 @@ export const en = {
   machinery_alert_one: 'machine reporting an issue',
   'cap.machinery.read': 'Read machinery',
   'cap.machinery.read.desc': 'View the machinery list and current status.',
+
+  // Dashboard hero
+  greeting_morning: 'Good morning',
+  greeting_afternoon: 'Good afternoon',
+  greeting_evening: 'Good evening',
+  dashboard_hero_revenue: 'Revenue this period',
+  dashboard_hero_subtitle: 'Here is what is moving in your shop today.',
+  dashboard_view_pipeline: 'Open pipeline',
 };
 
 export type TranslationKeys = keyof typeof en;
