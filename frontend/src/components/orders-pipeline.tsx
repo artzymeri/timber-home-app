@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Calendar,
   Filter,
@@ -144,6 +145,18 @@ export function OrdersPipeline({ basePath }: OrdersPipelineProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState(initialOrderForm);
+
+  // The sidebar's "+" trailing action navigates to ?create=1; pop the sheet
+  // when we land on the page with that param, then strip it so a refresh
+  // doesn't keep re-opening the sheet.
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  useEffect(() => {
+    if (searchParams.get('create') === '1') {
+      setCreateOpen(true);
+      router.replace(basePath);
+    }
+  }, [searchParams, router, basePath]);
 
   const load = () => {
     Promise.all([

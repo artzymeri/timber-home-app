@@ -291,6 +291,38 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        {/* Quick actions — horizontal pill strip directly under the hero */}
+        <div className="-mt-2 flex flex-wrap items-center gap-2 animate-in fade-in-0 duration-500">
+          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70 mr-1">
+            {t('dashboard_quick_actions')}
+          </span>
+          <Link
+            href="/admin/orders?create=1"
+            className="group inline-flex items-center gap-1.5 rounded-full bg-brand px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm shadow-brand/25 transition-all hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <Plus size={13} />
+            {t('create_order')}
+          </Link>
+          {[
+            { href: '/admin/users/new', icon: Users, label: t('users_invite') },
+            { href: '/admin/stages/new', icon: ClipboardList, label: t('stages_create') },
+            { href: '/admin/inventory', icon: Package, label: t('inventory') },
+            { href: '/admin/fleet', icon: Truck, label: t('fleet') },
+          ].map((action) => {
+            const Icon = action.icon;
+            return (
+              <Link
+                key={action.href}
+                href={action.href}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground/80 transition-all hover:-translate-y-0.5 hover:border-foreground/20 hover:bg-accent hover:text-foreground"
+              >
+                <Icon size={13} className="text-muted-foreground" />
+                {action.label}
+              </Link>
+            );
+          })}
+        </div>
+
         {machineryAlert.count > 0 && (
           <Link
             href="/admin/machinery"
@@ -317,9 +349,11 @@ export default function AdminDashboard() {
             icon={Coins}
             label={t('dashboard_pipeline_value')}
             hint={t('dashboard_pipeline_value_help')}
-            value={loading ? '—' : formatMoney(kpis.pipelineValue)}
+            value={loading ? '—' : kpis.pipelineValue}
+            format={(n) => formatMoney(n)}
             loading={loading}
             href="/admin/orders"
+            tone="default"
           />
           <MetricCard
             icon={Hourglass}
@@ -328,6 +362,7 @@ export default function AdminDashboard() {
             value={loading ? '—' : kpis.inProduction}
             loading={loading}
             href="/admin/orders"
+            tone="violet"
           />
           <MetricCard
             icon={CheckCircle2}
@@ -528,8 +563,7 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
+        <Card>
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between gap-2">
                 <CardTitle className="text-base">{t('dashboard_recent_orders')}</CardTitle>
@@ -575,35 +609,6 @@ export default function AdminDashboard() {
               )}
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">{t('dashboard_quick_actions')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Link href="/admin/orders" className={cn(buttonVariants({ variant: 'outline' }), 'w-full justify-start')}>
-                <Plus size={14} />
-                <span>{t('create_order')}</span>
-              </Link>
-              <Link href="/admin/users/new" className={cn(buttonVariants({ variant: 'outline' }), 'w-full justify-start')}>
-                <Users size={14} />
-                <span>{t('users_invite')}</span>
-              </Link>
-              <Link href="/admin/stages/new" className={cn(buttonVariants({ variant: 'outline' }), 'w-full justify-start')}>
-                <ClipboardList size={14} />
-                <span>{t('stages_create')}</span>
-              </Link>
-              <Link href="/admin/inventory" className={cn(buttonVariants({ variant: 'outline' }), 'w-full justify-start')}>
-                <Package size={14} />
-                <span>{t('inventory')}</span>
-              </Link>
-              <Link href="/admin/fleet" className={cn(buttonVariants({ variant: 'outline' }), 'w-full justify-start')}>
-                <Truck size={14} />
-                <span>{t('fleet')}</span>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </PageContainer>
   );

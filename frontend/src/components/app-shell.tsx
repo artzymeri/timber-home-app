@@ -44,6 +44,9 @@ export interface NavItem {
   badgeTone?: 'default' | 'destructive';
   /** Small alert dot for "needs attention" surfaces (e.g. inventory low stock) */
   indicator?: 'warning' | 'info';
+  /** Optional square icon button rendered to the right of the nav item.
+   *  Click navigates to its own href without activating the parent nav item. */
+  trailingAction?: { icon: React.ElementType; href: string; ariaLabel: string };
 }
 
 interface AppShellProps {
@@ -184,15 +187,18 @@ export function AppShell({ children, navItems }: AppShellProps) {
     const Icon = iconMap[item.label] || Briefcase;
     const label = item.translationKey !== false ? t(item.label as TranslationKeys) : item.label;
     const active = isActive(item.href);
-    return (
+    const TrailingIcon = item.trailingAction?.icon;
+    const showTrailing = !collapsed && !!item.trailingAction;
+
+    const linkBody = (
       <Link
-        key={item.href}
         href={item.href}
         title={collapsed ? String(label) : undefined}
         onClick={() => setMobileOpen(false)}
         className={cn(
           'flex items-center gap-3 rounded-md text-sm font-medium transition-colors',
           collapsed ? 'justify-center w-9 h-9 mx-auto' : 'px-3 py-2',
+          showTrailing && !collapsed && 'flex-1',
           active
             ? 'bg-brand text-white'
             : 'text-foreground/70 hover:bg-sidebar-accent hover:text-foreground'
@@ -230,6 +236,27 @@ export function AppShell({ children, navItems }: AppShellProps) {
           </>
         )}
       </Link>
+    );
+
+    if (!showTrailing) return <div key={item.href}>{linkBody}</div>;
+    return (
+      <div key={item.href} className="flex items-center gap-1.5">
+        {linkBody}
+        <Link
+          href={item.trailingAction!.href}
+          aria-label={item.trailingAction!.ariaLabel}
+          title={item.trailingAction!.ariaLabel}
+          onClick={() => setMobileOpen(false)}
+          className={cn(
+            'flex h-7 w-7 shrink-0 items-center justify-center rounded-md border transition-colors',
+            active
+              ? 'border-white/25 text-white/80 hover:border-white/50 hover:bg-white/10 hover:text-white'
+              : 'border-sidebar-border text-foreground/55 hover:border-foreground/20 hover:bg-sidebar-accent hover:text-foreground'
+          )}
+        >
+          {TrailingIcon && <TrailingIcon size={14} />}
+        </Link>
+      </div>
     );
   };
 

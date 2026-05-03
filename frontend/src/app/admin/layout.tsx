@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { Plus } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 import { AppShell, NavItem } from '@/components/app-shell';
 import { useI18n } from '@/lib/i18n';
 import { api } from '@/lib/api';
@@ -22,6 +24,8 @@ const baseNav: NavItem[] = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { t } = useI18n();
+  const { hasCapability } = useAuth();
+  const canCreateOrder = hasCapability('orders.create');
   const [errorCount, setErrorCount] = useState(0);
 
   useEffect(() => {
@@ -42,12 +46,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navItems = useMemo<NavItem[]>(
     () =>
-      baseNav.map((item) =>
-        item.pageKey === 'admin.machinery' && errorCount > 0
-          ? { ...item, badge: errorCount, badgeTone: 'destructive' }
-          : item
-      ),
-    [errorCount]
+      baseNav.map((item) => {
+        if (item.pageKey === 'admin.machinery' && errorCount > 0) {
+          return { ...item, badge: errorCount, badgeTone: 'destructive' };
+        }
+        if (item.pageKey === 'admin.orders' && canCreateOrder) {
+          return {
+            ...item,
+            trailingAction: {
+              icon: Plus,
+              href: '/admin/orders?create=1',
+              ariaLabel: t('create_order'),
+            },
+          };
+        }
+        return item;
+      }),
+    [errorCount, canCreateOrder, t]
   );
 
   return (
