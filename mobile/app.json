@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "Timber Home",
+    "slug": "timber-home",
+    "scheme": "timberhome",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./src/assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#fafaf9"
+    },
+    "ios": {
+      "bundleIdentifier": "com.timberhome.app",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Attach photos to QA reports and orders.",
+        "NSCameraUsageDescription": "Capture photos for QA reports."
+      }
+    },
+    "android": {
+      "package": "com.timberhome.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/icon.png",
+        "backgroundColor": "#fafaf9"
+      },
+      "permissions": ["READ_EXTERNAL_STORAGE", "CAMERA"]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./src/assets/icon.png",
+          "color": "#0ea5e9"
+        }
+      ],
+      "expo-image-picker",
+      "expo-document-picker",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Scan order QR codes to open them instantly."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
