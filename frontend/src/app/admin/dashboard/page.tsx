@@ -38,6 +38,7 @@ import { StageBadge } from '@/components/stage-badge';
 import { resolveIcon } from '@/lib/icon-resolver';
 import { colorClasses, type Stage, type StageColor } from '@/lib/stages';
 import { useI18n } from '@/lib/i18n';
+import type { TranslationKeys } from '@/lib/i18n/en';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -67,6 +68,7 @@ interface ProductionAnalytics {
   stageDistribution: Array<{
     status: string;
     name: string;
+    label_key: string | null;
     color: string;
     icon: string;
     count: number;
@@ -364,7 +366,9 @@ export default function AdminDashboard() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-medium truncate">{s.name}</span>
+                            <span className="text-sm font-medium truncate">
+                              {s.label_key ? t(s.label_key as TranslationKeys) : s.name}
+                            </span>
                             <span className="text-xs text-muted-foreground tabular-nums">{s.count}</span>
                           </div>
                           <div className="h-1.5 rounded-full bg-muted overflow-hidden">

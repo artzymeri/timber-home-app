@@ -37,7 +37,7 @@ router.get('/sales', async (_req: Request, res: Response) => {
 router.get('/production', async (_req: Request, res: Response) => {
   try {
     const [stageDistribution]: any = await sequelize.query(`
-      SELECT s.code as status, s.name, s.color, s.icon, COUNT(o.id) as count
+      SELECT s.code as status, s.name, s.label_key, s.color, s.icon, COUNT(o.id) as count
       FROM stages s
       LEFT JOIN orders o ON o.stage_id = s.id
       WHERE s.is_terminal = 0
