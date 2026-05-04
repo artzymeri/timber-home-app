@@ -33,7 +33,7 @@ export function SettingsScreen() {
                 )}
               >
                 <Globe size={14} color={locale === l ? 'white' : '#1c1917'} />
-                <Text className={cn('text-sm font-medium', locale === l ? 'text-background' : 'text-foreground')}>
+                <Text className={cn('text-sm font-medium', locale === l ? 'text-white' : 'text-foreground')}>
                   {l.toUpperCase()}
                 </Text>
               </Pressable>
@@ -59,7 +59,7 @@ export function SettingsScreen() {
                   )}
                 >
                   <Icon size={14} color={mode === m ? 'white' : '#1c1917'} />
-                  <Text className={cn('text-sm', mode === m ? 'text-background' : 'text-foreground')}>
+                  <Text className={cn('text-sm', mode === m ? 'text-white' : 'text-foreground')}>
                     {t(labelKey)}
                   </Text>
                 </Pressable>

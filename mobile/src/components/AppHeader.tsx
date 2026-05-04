@@ -104,7 +104,7 @@ export function AppHeader({ title, showBack }: AppHeaderProps) {
                   )}
                 >
                   <Icon size={14} color={active ? 'white' : iconColor} />
-                  <Text className={cn('text-xs', active ? 'text-background' : 'text-foreground')}>
+                  <Text className={cn('text-xs', active ? 'text-white' : 'text-foreground')}>
                     {t(`theme_mode_${m}` as const)}
                   </Text>
                 </Pressable>
@@ -128,7 +128,7 @@ export function AppHeader({ title, showBack }: AppHeaderProps) {
                 )}
               >
                 <Globe size={14} color={locale === l ? 'white' : iconColor} />
-                <Text className={cn('text-xs', locale === l ? 'text-background' : 'text-foreground')}>
+                <Text className={cn('text-xs', locale === l ? 'text-white' : 'text-foreground')}>
                   {l.toUpperCase()}
                 </Text>
               </Pressable>

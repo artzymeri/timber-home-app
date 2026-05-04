@@ -126,7 +126,7 @@ export function OrdersListScreen({ basePath }: { basePath: string }) {
         <View className="absolute bottom-4 right-4">
           <Button onPress={() => router.push(`${basePath}/new` as any)} size="lg">
             <Plus size={18} color="white" />
-            <Text className="font-semibold text-background">{t('orders_new')}</Text>
+            <Text className="font-semibold text-white">{t('orders_new')}</Text>
           </Button>
         </View>
       )}
@@ -143,7 +143,7 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
         active ? 'border-brand bg-brand' : 'border-border bg-card'
       )}
     >
-      <Text className={cn('text-xs font-medium', active ? 'text-background' : 'text-foreground')}>
+      <Text className={cn('text-xs font-medium', active ? 'text-white' : 'text-foreground')}>
         {label}
       </Text>
     </Pressable>

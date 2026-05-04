@@ -5,11 +5,22 @@ import { AppHeader } from '@/components/AppHeader';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useI18n } from '@/lib/i18n';
+import { useTheme } from '@/lib/theme';
 import { api } from '@/lib/api';
 import { stageDisplayName, type StageNode } from '@/lib/stages';
 import { resolveIcon } from '@/lib/icon-resolver';
 
-function StageRow({ node, depth, t }: { node: StageNode; depth: number; t: any }) {
+function StageRow({
+  node,
+  depth,
+  t,
+  iconColor,
+}: {
+  node: StageNode;
+  depth: number;
+  t: any;
+  iconColor: string;
+}) {
   const Icon = resolveIcon(node.icon);
   return (
     <View>
@@ -18,7 +29,7 @@ function StageRow({ node, depth, t }: { node: StageNode; depth: number; t: any }
         className="flex-row items-center gap-2 border-b border-border py-3 pr-3"
       >
         <View className="h-7 w-7 items-center justify-center rounded-md bg-muted">
-          <Icon size={14} color="#1c1917" />
+          <Icon size={14} color={iconColor} />
         </View>
         <Text className="flex-1 text-sm font-medium text-foreground" numberOfLines={1}>
           {stageDisplayName(node, t)}
@@ -28,7 +39,7 @@ function StageRow({ node, depth, t }: { node: StageNode; depth: number; t: any }
         {node.is_system && <Badge tone="muted">{t('system')}</Badge>}
       </View>
       {node.children?.map((c) => (
-        <StageRow key={c.id} node={c} depth={depth + 1} t={t} />
+        <StageRow key={c.id} node={c} depth={depth + 1} t={t} iconColor={iconColor} />
       ))}
     </View>
   );
@@ -36,6 +47,8 @@ function StageRow({ node, depth, t }: { node: StageNode; depth: number; t: any }
 
 export default function AdminStagesPage() {
   const { t } = useI18n();
+  const { resolved } = useTheme();
+  const iconColor = resolved === 'dark' ? '#fafaf9' : '#1c1917';
   const q = useQuery({
     queryKey: ['stages'],
     queryFn: () => api<{ stages: StageNode[] }>('/api/stages'),
@@ -51,7 +64,7 @@ export default function AdminStagesPage() {
         ) : (
           <View className="rounded-2xl border border-border bg-card">
             {tree.map((n) => (
-              <StageRow key={n.id} node={n} depth={0} t={t} />
+              <StageRow key={n.id} node={n} depth={0} t={t} iconColor={iconColor} />
             ))}
           </View>
         )}

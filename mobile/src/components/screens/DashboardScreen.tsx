@@ -171,6 +171,7 @@ export function DashboardScreen({ basePath }: { basePath: 'admin' | 'office' }) 
                   label={t('total')}
                   value={totalRevenue}
                   format={(n) => `€${Math.round(n).toLocaleString()}`}
+                  hint={t('dashboard_total_revenue_hint')}
                   icon={ShoppingCart}
                   href={`/${basePath}/orders`}
                   tone="brand"
@@ -184,6 +185,7 @@ export function DashboardScreen({ basePath }: { basePath: 'admin' | 'office' }) 
                   hint={`${stages.length} ${t('stages_title')}`}
                   icon={Truck}
                   href={`/${basePath}/orders`}
+                  tone="info"
                   index={1}
                 />
               </View>
@@ -192,7 +194,7 @@ export function DashboardScreen({ basePath }: { basePath: 'admin' | 'office' }) 
                   label={t('inventory')}
                   value={inventoryValue}
                   format={(n) => `€${Math.round(n).toLocaleString()}`}
-                  hint={lowStock > 0 ? `${lowStock} ${t('low_stock')}` : undefined}
+                  hint={lowStock > 0 ? `${lowStock} ${t('low_stock')}` : t('dashboard_inventory_ok')}
                   icon={Package}
                   href={isAdmin ? '/admin/inventory' : undefined}
                   tone={lowStock > 0 ? 'warning' : 'default'}
@@ -203,6 +205,7 @@ export function DashboardScreen({ basePath }: { basePath: 'admin' | 'office' }) 
                 <MetricCard
                   label={t('stages_terminal')}
                   value={completed}
+                  hint={t('dashboard_completed_hint')}
                   icon={CheckCircle2}
                   tone="success"
                   index={3}

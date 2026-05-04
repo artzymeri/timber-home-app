@@ -783,4 +783,6 @@ export const sq: typeof en = {
   machinery_alert_one: 'makineri me problem',
   'cap.machinery.read': 'Lexo makinerinë',
   'cap.machinery.read.desc': 'Shih listën e makinerive dhe statusin aktual.',
+  dashboard_inventory_ok: 'Stoku është në rregull.',
+  dashboard_completed_hint: 'Të mbyllura këtë muaj.',
 };

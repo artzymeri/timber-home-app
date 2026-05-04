@@ -781,6 +781,8 @@ export const en = {
   machinery_alert_one: 'machine reporting an issue',
   'cap.machinery.read': 'Read machinery',
   'cap.machinery.read.desc': 'View the machinery list and current status.',
+  dashboard_inventory_ok: 'Stock levels healthy.',
+  dashboard_completed_hint: 'Closed-out this month.',
 };
 
 export type TranslationKeys = keyof typeof en;
