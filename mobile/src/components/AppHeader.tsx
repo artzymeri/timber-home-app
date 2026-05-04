@@ -9,6 +9,7 @@ import { useTheme, type ThemeMode } from '@/lib/theme';
 import { Avatar } from '@/components/ui/Avatar';
 import { Sheet, type SheetRef } from '@/components/ui/Sheet';
 import { BrandLogo } from '@/components/BrandLogo';
+import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 import { cn } from '@/lib/utils';
 
 interface AppHeaderProps {
@@ -36,6 +37,7 @@ export function AppHeader({ title, showBack }: AppHeaderProps) {
   })();
 
   const notifTarget = hasPage('admin.notifications') ? '/admin/notifications' : null;
+  const { hasUnread } = useUnreadNotifications(!!notifTarget);
 
   return (
     <>
@@ -60,9 +62,24 @@ export function AppHeader({ title, showBack }: AppHeaderProps) {
           {notifTarget && (
             <Pressable
               onPress={() => router.push(notifTarget as any)}
-              className="h-10 w-10 items-center justify-center rounded-full active:bg-muted"
+              className="relative h-10 w-10 items-center justify-center rounded-full active:bg-muted"
             >
               <Bell size={20} color={iconColor} />
+              {hasUnread && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    width: 9,
+                    height: 9,
+                    borderRadius: 5,
+                    backgroundColor: '#f43f5e',
+                    borderWidth: 1.5,
+                    borderColor: '#ffffff',
+                  }}
+                />
+              )}
             </Pressable>
           )}
           <Pressable

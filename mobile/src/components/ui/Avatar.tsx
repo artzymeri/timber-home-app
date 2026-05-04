@@ -12,9 +12,9 @@ export function Avatar({ name, size = 36, className }: AvatarProps) {
   return (
     <View
       style={{ width: size, height: size, borderRadius: size / 2 }}
-      className={cn('items-center justify-center bg-foreground', className)}
+      className={cn('items-center justify-center bg-brand', className)}
     >
-      <Text className="font-semibold text-background" style={{ fontSize: size * 0.4 }}>
+      <Text className="font-semibold text-white" style={{ fontSize: size * 0.4 }}>
         {getInitials(name)}
       </Text>
     </View>

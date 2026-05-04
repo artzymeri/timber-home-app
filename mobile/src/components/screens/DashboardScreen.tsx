@@ -1,8 +1,16 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  FadeIn,
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import {
   ShoppingCart,
   Package,
@@ -136,26 +144,12 @@ export function DashboardScreen({ basePath }: { basePath: 'admin' | 'office' }) 
 
         {/* Machinery error alert — shown only when ≥1 machine reports an issue */}
         {machineryErrors.count > 0 && (
-          <Animated.View entering={FadeInDown.duration(450).delay(80)}>
-            <Pressable
-              onPress={() => router.push('/admin/machinery' as any)}
-              className="flex-row items-center gap-3 rounded-2xl border border-rose-500/40 bg-rose-500/10 p-4 active:opacity-80"
-            >
-              <View className="h-10 w-10 items-center justify-center rounded-full bg-rose-500/20">
-                <AlertTriangle size={18} color="#f43f5e" />
-              </View>
-              <View className="flex-1">
-                <Text className="font-semibold text-rose-700 dark:text-rose-300">
-                  {machineryErrors.count}{' '}
-                  {t(machineryErrors.count === 1 ? 'machinery_alert_one' : 'machinery_alert_title')}
-                </Text>
-                <Text className="mt-0.5 text-xs text-rose-700/70 dark:text-rose-300/70" numberOfLines={1}>
-                  {machineryErrors.machines.map((m) => m.name).join(' · ')}
-                </Text>
-              </View>
-              <ChevronRight size={16} color="#f43f5e" />
-            </Pressable>
-          </Animated.View>
+          <MachineryAlertBanner
+            count={machineryErrors.count}
+            names={machineryErrors.machines.map((m) => m.name)}
+            onPress={() => router.push('/admin/machinery' as any)}
+            t={t}
+          />
         )}
 
         {sales.isLoading && stages.length === 0 ? (
@@ -265,5 +259,70 @@ export function DashboardScreen({ basePath }: { basePath: 'admin' | 'office' }) 
         )}
       </ScrollView>
     </View>
+  );
+}
+
+interface MachineryAlertBannerProps {
+  count: number;
+  names: string[];
+  onPress: () => void;
+  t: (key: any) => string;
+}
+
+/**
+ * Banner with a radar-style pulsing halo behind the alert icon. The halo lives
+ * on the UI thread via reanimated `withRepeat`, so it costs nothing on the JS
+ * side and keeps animating during scroll.
+ */
+function MachineryAlertBanner({ count, names, onPress, t }: MachineryAlertBannerProps) {
+  const halo = useSharedValue(1);
+  useEffect(() => {
+    halo.value = withRepeat(
+      withTiming(1.55, { duration: 1300, easing: Easing.out(Easing.quad) }),
+      -1,
+      false
+    );
+  }, [halo]);
+  const haloStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: halo.value }],
+    // fade out as it expands — same shape as the StatusDot in MachineryBlueprintCard
+    opacity: 0.45 * (1.55 - halo.value) / 0.55,
+  }));
+
+  return (
+    <Animated.View entering={FadeInDown.duration(450).delay(80)}>
+      <Pressable
+        onPress={onPress}
+        className="flex-row items-center gap-3 rounded-2xl border border-rose-500/40 bg-rose-500/10 p-4 active:opacity-80"
+      >
+        <View className="h-10 w-10 items-center justify-center">
+          {/* Animated halo ring — sits behind the icon container */}
+          <Animated.View
+            style={[
+              {
+                position: 'absolute',
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: '#f43f5e',
+              },
+              haloStyle,
+            ]}
+          />
+          <View className="h-10 w-10 items-center justify-center rounded-full bg-rose-500/20">
+            <AlertTriangle size={18} color="#f43f5e" />
+          </View>
+        </View>
+        <View className="flex-1">
+          <Text className="font-semibold text-rose-700 dark:text-rose-300">
+            {count} {t(count === 1 ? 'machinery_alert_one' : 'machinery_alert_title')}
+          </Text>
+          <Text className="mt-0.5 text-xs text-rose-700/70 dark:text-rose-300/70" numberOfLines={1}>
+            {names.join(' · ')}
+          </Text>
+        </View>
+        <ChevronRight size={16} color="#f43f5e" />
+      </Pressable>
+    </Animated.View>
   );
 }
