@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { BrandLogo } from '@/components/brand-logo';
+import { LoginShader } from '@/components/login-shader';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -35,17 +36,9 @@ export default function LoginPage() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      {/* Brand panel — dark */}
+      {/* Brand panel — dark, with interactive shader wallpaper */}
       <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#0b1116] text-stone-50 px-12 py-10">
-        {/* Grid + glow background */}
-        <div
-          aria-hidden
-          className="absolute inset-0 opacity-[0.18] pointer-events-none [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:64px_64px]"
-        />
-        <div
-          aria-hidden
-          className="absolute inset-0 pointer-events-none [background-image:radial-gradient(circle_at_18%_28%,rgba(94,196,205,0.18),transparent_55%),radial-gradient(circle_at_85%_85%,rgba(255,255,255,0.04),transparent_55%)]"
-        />
+        <LoginShader />
 
         {/* Top: logo + brand name */}
         <div className="relative flex items-center gap-3">
