@@ -127,6 +127,16 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* Buttons feel clickable everywhere, including raw <button> elements that
+     don't go through shadcn's <Button>. Disabled state still gets the
+     default-disabled cursor. */
+  button:not(:disabled):not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+  button:disabled,
+  button[aria-disabled='true'] {
+    cursor: not-allowed;
+  }
   body {
     @apply bg-background text-foreground;
   }

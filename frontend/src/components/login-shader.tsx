@@ -230,10 +230,10 @@ export function AuroraButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'group relative h-12 w-full overflow-hidden rounded-xl text-stone-50 text-[15px] font-medium',
+        'group relative h-12 w-full cursor-pointer overflow-hidden rounded-xl text-stone-50 text-[15px] font-medium',
         'shadow-[0_8px_24px_-12px_rgba(126,200,208,0.6)]',
         'transition-transform active:scale-[0.99]',
-        disabled && 'opacity-60 cursor-not-allowed',
+        disabled && 'cursor-not-allowed opacity-60',
         className
       )}
     >
