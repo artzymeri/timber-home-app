@@ -7,9 +7,8 @@ import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Button } from '@/components/ui/button';
 import { BrandLogo } from '@/components/brand-logo';
-import { LoginShader } from '@/components/login-shader';
+import { AuroraButton, LoginShader } from '@/components/login-shader';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -151,14 +150,10 @@ export default function LoginPage() {
                 </p>
               )}
 
-              <Button
-                type="submit"
-                disabled={loading}
-                className="group h-12 w-full rounded-xl bg-[#0b1116] text-stone-50 text-[15px] font-medium hover:bg-[#0b1116]/90"
-              >
+              <AuroraButton type="submit" disabled={loading}>
                 {loading ? t('signing_in') : t('sign_in')}
-                <ArrowRight size={16} className="ml-2 transition-transform group-hover:translate-x-0.5" />
-              </Button>
+                <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+              </AuroraButton>
             </form>
 
             <button

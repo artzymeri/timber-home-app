@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 
 // Brand teal `#7ec8d0` ≈ vec3(0.495, 0.784, 0.815) for the GLSL palette.
 
@@ -13,9 +14,10 @@ void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
 const FRAG = `#version 300 es
 precision highp float;
 uniform vec2 uRes;
-uniform vec2 uMouse;   // normalized [0..1], y-flipped to GL space
-uniform float uTime;   // seconds
-uniform float uClick;  // 0..1, decays after each click
+uniform vec2 uMouse;     // normalized [0..1], y-flipped to GL space
+uniform float uTime;     // seconds
+uniform float uClick;    // 0..1, decays after each click
+uniform float uBandScale; // band frequency multiplier — small = fatter bands
 out vec4 fragColor;
 const vec3 BRAND = vec3(0.495, 0.784, 0.815);
 const vec3 BG    = vec3(0.027, 0.043, 0.067);
@@ -25,7 +27,7 @@ void main() {
   vec3 col = BG;
   for (int i = 0; i < 4; i++) {
     float fi = float(i);
-    float band = sin(uv.y * (5.0 + fi*0.7) + t*1.2 + fi*1.7 + sin(uv.x*3.0 + t)*1.6);
+    float band = sin(uv.y * (5.0 + fi*0.7) * uBandScale + t*1.2 + fi*1.7 + sin(uv.x*3.0 + t)*1.6);
     band = smoothstep(0.55, 0.97, abs(band));
     float warp = exp(-length(uv - uMouse) * 3.5) * 0.7;
     band *= 0.35 + warp + uClick * 0.6;
@@ -36,7 +38,12 @@ void main() {
 }
 `;
 
-export function LoginShader() {
+/**
+ * Generic aurora canvas — fills its parent. Tracks mouse + click relative to
+ * its own bounds. Used both as the login panel wallpaper and as the login
+ * button background.
+ */
+function AuroraCanvas({ className, bandScale = 1 }: { className?: string; bandScale?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [supported, setSupported] = useState(true);
 
@@ -92,6 +99,7 @@ export function LoginShader() {
     const uMouse = gl.getUniformLocation(program, 'uMouse');
     const uTime = gl.getUniformLocation(program, 'uTime');
     const uClick = gl.getUniformLocation(program, 'uClick');
+    const uBandScale = gl.getUniformLocation(program, 'uBandScale');
 
     let mouseX = 0.5;
     let mouseY = 0.5;
@@ -99,16 +107,26 @@ export function LoginShader() {
     let targetMouseY = 0.5;
     let click = 0;
 
+    // Track motion globally — for the button, the cursor often hovers over the
+    // text overlay (which has pointer-events) rather than the canvas itself,
+    // so a window-level listener feels more responsive.
     const onMove = (e: PointerEvent) => {
       const r = canvas.getBoundingClientRect();
       targetMouseX = (e.clientX - r.left) / r.width;
       targetMouseY = 1 - (e.clientY - r.top) / r.height;
     };
-    const onClick = () => {
-      click = 1;
+    const onClick = (e: MouseEvent) => {
+      const r = canvas.getBoundingClientRect();
+      // Only register clicks that landed on/inside the canvas's bounds
+      if (
+        e.clientX >= r.left && e.clientX <= r.right &&
+        e.clientY >= r.top && e.clientY <= r.bottom
+      ) {
+        click = 1;
+      }
     };
-    canvas.addEventListener('pointermove', onMove);
-    canvas.addEventListener('click', onClick);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('click', onClick);
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
@@ -129,13 +147,13 @@ export function LoginShader() {
     let running = true;
     const tick = (now: number) => {
       if (!running) return;
-      // Ease the mouse so motion feels fluid even at low frame rates.
       mouseX += (targetMouseX - mouseX) * 0.08;
       mouseY += (targetMouseY - mouseY) * 0.08;
       gl.uniform2f(uRes, canvas.width, canvas.height);
       gl.uniform2f(uMouse, mouseX, mouseY);
       gl.uniform1f(uTime, (now - start) / 1000);
       gl.uniform1f(uClick, click);
+      gl.uniform1f(uBandScale, bandScale);
       click *= 0.92;
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       raf = requestAnimationFrame(tick);
@@ -157,8 +175,8 @@ export function LoginShader() {
       running = false;
       cancelAnimationFrame(raf);
       ro.disconnect();
-      canvas.removeEventListener('pointermove', onMove);
-      canvas.removeEventListener('click', onClick);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('click', onClick);
       document.removeEventListener('visibilitychange', onVisibility);
       gl.deleteProgram(program);
       gl.deleteBuffer(vbo);
@@ -171,8 +189,65 @@ export function LoginShader() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 h-full w-full"
+      className={cn('h-full w-full', className)}
       style={{ touchAction: 'none' }}
     />
+  );
+}
+
+/** Aurora wallpaper for the login panel — absolutely positioned, fills parent. */
+export function LoginShader() {
+  return (
+    <div className="absolute inset-0">
+      <AuroraCanvas />
+    </div>
+  );
+}
+
+interface AuroraButtonProps {
+  type?: 'button' | 'submit';
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+  children: ReactNode;
+}
+
+/**
+ * Submit-style button with the aurora shader running underneath. The text
+ * sits in a layer above the canvas; mouse + click drive the same shader the
+ * panel uses, so the button picks up the same character.
+ */
+export function AuroraButton({
+  type = 'button',
+  onClick,
+  disabled,
+  className,
+  children,
+}: AuroraButtonProps) {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        'group relative h-12 w-full overflow-hidden rounded-xl text-stone-50 text-[15px] font-medium',
+        'shadow-[0_8px_24px_-12px_rgba(126,200,208,0.6)]',
+        'transition-transform active:scale-[0.99]',
+        disabled && 'opacity-60 cursor-not-allowed',
+        className
+      )}
+    >
+      <span aria-hidden className="pointer-events-none absolute inset-0">
+        <AuroraCanvas bandScale={0.32} />
+      </span>
+      {/* Subtle hairline highlight at the top edge */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-stone-50/40 to-transparent"
+      />
+      <span className="relative z-10 flex items-center justify-center gap-2">
+        {children}
+      </span>
+    </button>
   );
 }
