@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
   Dimensions,
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -16,99 +15,28 @@ import Animated, {
   Easing,
   FadeIn,
   FadeInUp,
-  interpolate,
   useAnimatedStyle,
   useSharedValue,
-  withDelay,
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowRight } from 'lucide-react-native';
+import { ArrowRight, Lock, Mail } from 'lucide-react-native';
 import { useAuth } from '@/lib/auth-context';
-import { useI18n } from '@/lib/i18n';
+import type { TranslationKeys } from '@/lib/i18n';
+import { sq } from '@/lib/i18n/sq';
 import { useToast } from '@/components/ui/Toast';
 import { BrandLogo } from '@/components/BrandLogo';
+import { AuroraBackground } from '@/components/AuroraBackground';
 
-const { width: SW, height: SH } = Dimensions.get('window');
-const LOGO = require('@/assets/icon.png');
+const { width: SW } = Dimensions.get('window');
 
-interface FloatSpec {
-  startX: number; // 0..1 fraction of screen width
-  dx: number; // horizontal drift in px while ascending — sets the angle
-  rotate: number; // initial rotation in degrees
-  size: number;
-  duration: number; // ms for one full bottom-to-top traversal
-  delay: number; // staggered start
-}
-
-// Pre-distributed positions/angles/sizes/timings so the field reads as evenly
-// random rather than a regular grid. Same Timber Home logo across all of them.
-const FLOATERS: FloatSpec[] = [
-  { startX: 0.06, dx: 28, rotate: -8, size: 38, duration: 18000, delay: 0 },
-  { startX: 0.22, dx: -32, rotate: 14, size: 48, duration: 22000, delay: 3200 },
-  { startX: 0.4, dx: 18, rotate: -4, size: 36, duration: 24000, delay: 6500 },
-  { startX: 0.58, dx: -24, rotate: 6, size: 52, duration: 20000, delay: 1800 },
-  { startX: 0.74, dx: 32, rotate: 0, size: 42, duration: 26000, delay: 9000 },
-  { startX: 0.88, dx: -22, rotate: -10, size: 36, duration: 23000, delay: 4400 },
-  { startX: 0.14, dx: -18, rotate: 8, size: 46, duration: 21000, delay: 11000 },
-  { startX: 0.32, dx: 26, rotate: -6, size: 40, duration: 25000, delay: 14500 },
-  { startX: 0.5, dx: -30, rotate: 12, size: 44, duration: 19000, delay: 7500 },
-  { startX: 0.66, dx: 22, rotate: -4, size: 36, duration: 27000, delay: 12500 },
-  { startX: 0.82, dx: -16, rotate: 4, size: 56, duration: 22000, delay: 5500 },
-  { startX: 0.04, dx: 24, rotate: -12, size: 42, duration: 28000, delay: 16500 },
-  { startX: 0.46, dx: 14, rotate: 10, size: 34, duration: 24000, delay: 9500 },
-  { startX: 0.72, dx: -28, rotate: -6, size: 48, duration: 21000, delay: 13500 },
-  { startX: 0.18, dx: 20, rotate: 16, size: 38, duration: 25500, delay: 18000 },
-  { startX: 0.62, dx: -18, rotate: -8, size: 40, duration: 23500, delay: 2500 },
-  { startX: 0.86, dx: 14, rotate: 6, size: 36, duration: 26500, delay: 8000 },
-  { startX: 0.36, dx: -22, rotate: -14, size: 44, duration: 20500, delay: 15500 },
-];
-
-function Floater({ startX, dx, rotate, size, duration, delay }: FloatSpec) {
-  const progress = useSharedValue(0);
-
-  useEffect(() => {
-    progress.value = withDelay(
-      delay,
-      withRepeat(withTiming(1, { duration, easing: Easing.linear }), -1, false)
-    );
-  }, [progress, duration, delay]);
-
-  const style = useAnimatedStyle(() => {
-    const ty = interpolate(progress.value, [0, 1], [SH + size, -size * 2]);
-    const tx = progress.value * dx;
-    const opacity = interpolate(
-      progress.value,
-      [0, 0.15, 0.85, 1],
-      [0, 0.08, 0.08, 0]
-    );
-    return {
-      opacity,
-      transform: [
-        { translateX: tx },
-        { translateY: ty },
-        { rotate: `${rotate}deg` },
-      ],
-    };
-  });
-
-  return (
-    <Animated.View
-      pointerEvents="none"
-      style={[
-        { position: 'absolute', left: SW * startX, top: 0 },
-        style,
-      ]}
-    >
-      <Image source={LOGO} style={{ width: size, height: size }} resizeMode="contain" />
-    </Animated.View>
-  );
-}
+// Login screen is locked to Albanian regardless of the user's saved locale —
+// `useI18n()` would respect the global preference, so we read directly from sq.
+const t = (key: TranslationKeys): string => (sq[key] as string | undefined) ?? key;
 
 export default function LoginScreen() {
   const { login } = useAuth();
-  const { t } = useI18n();
   const toast = useToast();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -160,18 +88,15 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0a0a0a' }}>
-      {/* Drifting Timber Home brand marks at low opacity */}
-      {FLOATERS.map((f, i) => (
-        <Floater key={i} {...f} />
-      ))}
+    <View style={{ flex: 1, backgroundColor: '#020617' }}>
+      <AuroraBackground />
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
             paddingTop: insets.top + 80,
-            paddingBottom: insets.bottom + 24,
+            paddingBottom: insets.bottom + 56,
             paddingHorizontal: 24,
           }}
           keyboardShouldPersistTaps="handled"
@@ -193,25 +118,31 @@ export default function LoginScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInUp.duration(600).delay(200)} style={{ marginTop: 48, gap: 12 }}>
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder={t('email')}
-              placeholderTextColor="#64748b"
-              autoCapitalize="none"
-              autoComplete="email"
-              keyboardType="email-address"
-              style={fieldStyle}
-            />
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              placeholder={t('password')}
-              placeholderTextColor="#64748b"
-              autoCapitalize="none"
-              secureTextEntry
-              style={fieldStyle}
-            />
+            <View style={fieldRowStyle}>
+              <Mail size={18} color="rgba(255,255,255,0.55)" />
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder={t('email')}
+                placeholderTextColor="rgba(255,255,255,0.7)"
+                autoCapitalize="none"
+                autoComplete="email"
+                keyboardType="email-address"
+                style={fieldInputStyle}
+              />
+            </View>
+            <View style={fieldRowStyle}>
+              <Lock size={18} color="rgba(255,255,255,0.55)" />
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                placeholder={t('password')}
+                placeholderTextColor="rgba(255,255,255,0.7)"
+                autoCapitalize="none"
+                secureTextEntry
+                style={fieldInputStyle}
+              />
+            </View>
 
             <Animated.View
               style={[
@@ -287,17 +218,49 @@ export default function LoginScreen() {
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Pinned slogan — sits over the aurora bottom vignette, doesn't scroll. */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          bottom: insets.bottom + 16,
+          left: 0,
+          right: 0,
+          alignItems: 'center',
+        }}
+      >
+        <Text
+          style={{
+            color: 'rgba(255,255,255,0.5)',
+            fontSize: 12,
+            fontStyle: 'italic',
+            letterSpacing: 0.3,
+          }}
+        >
+          Thjeshtësi që ju frymëzon
+        </Text>
+      </View>
     </View>
   );
 }
 
-const fieldStyle = {
+// Black-tinted glass row that hosts a leading icon + the TextInput.
+const fieldRowStyle = {
+  flexDirection: 'row' as const,
+  alignItems: 'center' as const,
+  gap: 10,
   height: 52,
   borderRadius: 14,
   paddingHorizontal: 16,
-  color: 'white',
-  fontSize: 15,
-  backgroundColor: 'rgba(255,255,255,0.04)',
+  backgroundColor: 'rgba(0,0,0,0.45)',
   borderWidth: 1,
-  borderColor: 'rgba(255,255,255,0.08)',
+  borderColor: 'rgba(255,255,255,0.18)',
+};
+
+const fieldInputStyle = {
+  flex: 1,
+  height: '100%' as const,
+  color: '#ffffff',
+  fontSize: 15,
 };
