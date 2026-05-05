@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, ChevronRight, Eye, FileText, Share2 } from 'lucide-react';
+import { ArrowRight, Eye, FileText, Share2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 import { Input } from '@/components/ui/input';
@@ -18,7 +18,6 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showDemo, setShowDemo] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,23 +154,6 @@ export default function LoginPage() {
                 <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
               </AuroraButton>
             </form>
-
-            <button
-              type="button"
-              onClick={() => setShowDemo((v) => !v)}
-              className="flex h-12 w-full items-center justify-between rounded-xl border bg-card px-4 text-sm text-muted-foreground hover:bg-accent transition-colors"
-            >
-              <span>{t('login_demo_credentials')}</span>
-              <ChevronRight
-                size={16}
-                className={`transition-transform ${showDemo ? 'rotate-90' : ''}`}
-              />
-            </button>
-            {showDemo && (
-              <p className="-mt-4 px-4 text-xs font-mono text-muted-foreground">
-                {t('login_demo_help')}
-              </p>
-            )}
           </div>
         </div>
 
